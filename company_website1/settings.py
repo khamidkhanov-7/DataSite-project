@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'news',
     'products',
     'contacts',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
