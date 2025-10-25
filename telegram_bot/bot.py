@@ -41,6 +41,10 @@ class Form(StatesGroup):
 # ===== START =====
 @router.message(Command("start"))
 async def start(message: types.Message, state: FSMContext):
+    await show_language_menu(message)
+
+# ===== TIL TANLASH MENYUSI =====
+async def show_language_menu(message: types.Message):
     markup = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="🇺🇿 O'zbekcha"), KeyboardButton(text="🇷🇺 Русский")]
@@ -56,20 +60,8 @@ async def start(message: types.Message, state: FSMContext):
 @router.message(F.text.in_(["🇺🇿 O'zbekcha", "🇷🇺 Русский"]))
 async def set_language(message: types.Message, state: FSMContext):
     lang = "uz" if "O'zbekcha" in message.text else "ru"
-    await state.update_data(lang=lang)
+    await state.update_data(lang=lang, in_menu=True)  # in_menu = True -> asosiy menyuda
     await show_menu(message, lang)
-
-# ===== BACK TO LANGUAGE SELECTION =====
-@router.message(F.text.in_(["🔙 Ortga", "🔙 Назад"]))
-async def back_to_language(message: types.Message, state: FSMContext):
-    await state.clear()
-    markup = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🇺🇿 O'zbekcha"), KeyboardButton(text="🇷🇺 Русский")]
-        ],
-        resize_keyboard=True
-    )
-    await message.answer("⬅️ Tilni tanlang:", reply_markup=markup)
 
 # ===== MENU =====
 async def show_menu(message, lang):
@@ -82,7 +74,7 @@ async def show_menu(message, lang):
             ],
             resize_keyboard=True
         )
-        await message.answer("Asosiy menyu:", reply_markup=markup)
+        await message.answer("📋 Asosiy menyu:", reply_markup=markup)
     else:
         markup = ReplyKeyboardMarkup(
             keyboard=[
@@ -92,13 +84,53 @@ async def show_menu(message, lang):
             ],
             resize_keyboard=True
         )
-        await message.answer("Главное меню:", reply_markup=markup)
+        await message.answer("📋 Главное меню:", reply_markup=markup)
+
+# ===== BACK HANDLER =====
+@router.message(F.text.in_(["🔙 Ortga", "🔙 Назад"]))
+async def back_handler(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    lang = data.get("lang")
+    in_menu = data.get("in_menu", False)
+
+    # Agar foydalanuvchi asosiy menyuda bo‘lsa → til tanlash oynasiga qaytadi
+    if in_menu:
+        await state.clear()
+        await show_language_menu(message)
+    else:
+        # Aks holda (bo‘lim ichida bo‘lsa) asosiy menyuga qaytadi
+        await state.update_data(in_menu=True)
+        await show_menu(message, lang)
+
+# ===== TEMPORARY EMPTY SECTIONS =====
+@router.message(F.text.in_([
+    "🏭 Zavod haqida", "🧾 Mahsulotlar", "📰 Yangiliklar",
+    "🏭 О заводе", "🧾 Продукция", "📰 Новости"
+]))
+async def empty_section(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    lang = data.get("lang", "uz")
+    await state.update_data(in_menu=False)  # Bo‘lim ichiga kirdi
+
+    if lang == "uz":
+        text = "ℹ️ Hozircha ma’lumot yo‘q."
+        back_btn = "🔙 Ortga"
+    else:
+        text = "ℹ️ Пока нет информации."
+        back_btn = "🔙 Назад"
+
+    markup = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=back_btn)]],
+        resize_keyboard=True
+    )
+    await message.answer(text, reply_markup=markup)
 
 # ===== CONTACT =====
 @router.message(F.text.in_(["📞 Aloqa", "📞 Контакты"]))
 async def contact(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("lang", "uz")
+    await state.update_data(in_menu=False)
     if lang == "uz":
         await message.answer(
             "📍 Manzil: Namangan, O‘zbekiston\n📞 Tel: +998 (69) 123-45-67\n✉️ Email: info@namanganmash.uz"
@@ -111,19 +143,30 @@ async def contact(message: types.Message, state: FSMContext):
 # ===== REQUEST FORM =====
 @router.message(F.text.in_(["📝 So‘rov yuborish", "📝 Отправить заявку"]))
 async def request_start(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    lang = data.get("lang", "uz")
+    await state.update_data(in_menu=False)
+
     await state.set_state(Form.name)
+    back_btn = "🔙 Ortga" if lang == "uz" else "🔙 Назад"
+
     markup = ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="🔙 Ortga")]],
+        keyboard=[[KeyboardButton(text=back_btn)]],
         resize_keyboard=True
     )
-    await message.answer("✍️ Ismingizni kiriting:", reply_markup=markup)
+
+    if lang == "uz":
+        await message.answer("✍️ Ismingizni kiriting:", reply_markup=markup)
+    else:
+        await message.answer("✍️ Введите ваше имя:", reply_markup=markup)
 
 @router.message(Form.name)
 async def get_name(message: types.Message, state: FSMContext):
-    if message.text == "🔙 Ortga":
-        await state.clear()
+    if message.text in ["🔙 Ortga", "🔙 Назад"]:
         data = await state.get_data()
         lang = data.get("lang", "uz")
+        await state.clear()
+        await state.update_data(lang=lang, in_menu=True)
         await show_menu(message, lang)
         return
 
@@ -133,7 +176,7 @@ async def get_name(message: types.Message, state: FSMContext):
 
 @router.message(Form.phone)
 async def get_phone(message: types.Message, state: FSMContext):
-    if message.text == "🔙 Ortga":
+    if message.text in ["🔙 Ortga", "🔙 Назад"]:
         await state.set_state(Form.name)
         await message.answer("✍️ Ismingizni qayta kiriting:")
         return
@@ -144,7 +187,7 @@ async def get_phone(message: types.Message, state: FSMContext):
 
 @router.message(Form.message)
 async def get_message(message: types.Message, state: FSMContext):
-    if message.text == "🔙 Ortga":
+    if message.text in ["🔙 Ortga", "🔙 Назад"]:
         await state.set_state(Form.phone)
         await message.answer("📱 Telefon raqamingizni qayta kiriting:")
         return
@@ -177,6 +220,7 @@ async def get_message(message: types.Message, state: FSMContext):
     await message.answer("✅ So‘rovingiz yuborildi! Tez orada siz bilan bog‘lanamiz.")
     await state.clear()
     lang = data.get("lang", "uz")
+    await state.update_data(lang=lang, in_menu=True)
     await show_menu(message, lang)
 
 # ===== DEFAULT =====
@@ -184,6 +228,7 @@ async def get_message(message: types.Message, state: FSMContext):
 async def fallback(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("lang", "uz")
+    await state.update_data(in_menu=True)
     await show_menu(message, lang)
 
 # ===== START BOT =====
