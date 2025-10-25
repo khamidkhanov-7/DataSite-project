@@ -10,7 +10,6 @@ from aiogram import Router
 from dotenv import load_dotenv
 import asyncio
 
-# ===== ENV yuklash =====
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -125,7 +124,7 @@ async def empty_section(message: types.Message, state: FSMContext):
     )
     await message.answer(text, reply_markup=markup)
 
-# ===== CONTACT =====
+
 @router.message(F.text.in_(["📞 Aloqa", "📞 Контакты"]))
 async def contact(message: types.Message, state: FSMContext):
     data = await state.get_data()
@@ -223,7 +222,6 @@ async def get_message(message: types.Message, state: FSMContext):
     await state.update_data(lang=lang, in_menu=True)
     await show_menu(message, lang)
 
-# ===== DEFAULT =====
 @router.message()
 async def fallback(message: types.Message, state: FSMContext):
     data = await state.get_data()
@@ -231,7 +229,7 @@ async def fallback(message: types.Message, state: FSMContext):
     await state.update_data(in_menu=True)
     await show_menu(message, lang)
 
-# ===== START BOT =====
+
 async def main():
     print("🤖 Bot ishga tushdi...")
     await dp.start_polling(bot)
