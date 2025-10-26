@@ -45,14 +45,11 @@ INSTALLED_APPS = [
     'contacts',
     'drf_yasg',
     'django.contrib.humanize',
-    'corsheaders',
-    'django-cors-headers',
-    
+    'corsheaders',  
     'aiogram',
     'telegram_bot',
-    'dj_database_url',
-
 ]
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
