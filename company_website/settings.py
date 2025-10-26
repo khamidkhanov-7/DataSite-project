@@ -64,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'company_website.urls'
@@ -101,9 +102,8 @@ DATABASES = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite default port
-    "http://localhost:3000",  # React default port
+CCORS_ALLOWED_ORIGINS = [
+    "https://namanganmash.vercel.app",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
