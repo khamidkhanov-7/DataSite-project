@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: company_backend
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: |
+      gunicorn company_website.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        value: django-insecure-c@8c_-fk4t2%2)bqj#4*^n%kd+$%_d@f1#h*7v)k-0o8quadzk
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: company_db
+          property: connectionString
+
