@@ -92,11 +92,14 @@ WSGI_APPLICATION = 'company_website.wsgi.application'
 
 import os
 
+import dj_database_url
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')  # Render avtomatik DATABASE_URL beradi
+        default=os.environ.get('DATABASE_URL')
     )
 }
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite default port
