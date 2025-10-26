@@ -102,6 +102,8 @@ DATABASES = {
 
 CCORS_ALLOWED_ORIGINS = [
     "https://namanganmash.vercel.app",
+    "http://localhost:3000",
+    "https://namanganmash.onrender.com",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
