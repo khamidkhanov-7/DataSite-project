@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django.contrib.humanize',
     'corsheaders',
+    'django-cors-headers',
     
     'aiogram',
     'telegram_bot',
